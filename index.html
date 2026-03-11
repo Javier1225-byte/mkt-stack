@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marketing Stack Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#0f1117;color:#e2e8f0;min-height:100vh}
+
+#login-screen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.login-box{background:#1e2130;border:1px solid #2d3250;border-radius:16px;padding:40px 36px;width:100%;max-width:380px;text-align:center}
+.login-box h1{font-size:1.3rem;color:#a78bfa;margin-bottom:6px}
+.login-box p{font-size:.8rem;color:#64748b;margin-bottom:28px}
+.login-field{margin-bottom:14px;text-align:left}
+.login-field label{display:block;font-size:.75rem;color:#94a3b8;margin-bottom:5px}
+.login-field input{width:100%;background:#0f1117;border:1px solid #2d3250;border-radius:8px;color:#e2e8f0;padding:10px 13px;font-size:.88rem;outline:none}
+.login-field input:focus{border-color:#7c3aed}
+.btn-login{width:100%;background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:11px;font-size:.9rem;font-weight:600;cursor:pointer;margin-top:6px;transition:background .2s}
+.btn-login:hover{background:#6d28d9}
+.login-error{color:#f87171;font-size:.78rem;margin-top:10px;min-height:18px}
+
+#app{display:none;padding:24px}
+h1{font-size:1.4rem;font-weight:700;color:#a78bfa;letter-spacing:.5px}
+.subtitle{font-size:.8rem;color:#64748b;margin-top:2px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.topbar-right{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.fx-panel{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.fx-box{background:#1e2130;border:1px solid #2d3250;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px}
+.fx-box label{font-size:.75rem;color:#94a3b8;white-space:nowrap}
+.fx-box input{background:transparent;border:none;color:#a78bfa;font-size:.9rem;font-weight:600;width:80px;outline:none;text-align:right}
+.fx-tag{font-size:.7rem;background:#312e81;color:#c4b5fd;padding:2px 6px;border-radius:4px}
+.btn-logout{background:#1e2130;border:1px solid #2d3250;color:#94a3b8;border-radius:8px;padding:7px 14px;font-size:.78rem;cursor:pointer}
+.btn-logout:hover{border-color:#7c3aed;color:#a78bfa}
+
+.sync-bar{display:flex;align-items:center;gap:7px;font-size:.74rem;color:#475569;margin-bottom:14px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#475569;flex-shrink:0}
+.sync-dot.ok{background:#22c55e}
+.sync-dot.saving{background:#f59e0b;animation:pulse .8s infinite}
+.sync-dot.error{background:#f87171}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.filters select{background:#1e2130;border:1px solid #2d3250;border-radius:8px;color:#e2e8f0;padding:7px 12px;font-size:.82rem;outline:none}
+.filters select:focus{border-color:#7c3aed}
+.btn-add{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:.85rem;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-add:hover{background:#6d28d9}
+
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #2d3250}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead tr{background:#1a1d2e}
+th{padding:11px 12px;text-align:left;color:#94a3b8;font-weight:600;white-space:nowrap;border-bottom:1px solid #2d3250}
+tbody tr{border-bottom:1px solid #1e2130;transition:background .15s}
+tbody tr:hover{background:#1a1d2e}
+td{padding:10px 12px;vertical-align:middle;white-space:nowrap}
+td.comentario{max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#94a3b8;font-size:.78rem}
+.calc{color:#a78bfa;font-weight:600}
+
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.72rem;font-weight:600}
+.badge.activa{background:#14532d;color:#86efac}
+.badge.pausada{background:#422006;color:#fdba74}
+.badge.renovar{background:#450a0a;color:#fca5a5}
+.badge.terminado{background:#1e293b;color:#94a3b8}
+.badge.requerimiento{background:#1e1b4b;color:#a5b4fc}
+
+.card-chip{background:#1e3a5f;color:#93c5fd;font-size:.75rem;font-weight:600;padding:3px 9px;border-radius:6px;font-family:monospace;letter-spacing:.5px}
+.link-btn{background:transparent;border:none;color:#7c3aed;cursor:pointer;font-size:1rem;padding:2px 6px;border-radius:4px;text-decoration:none}
+.link-btn:hover{color:#a78bfa}
+
+/* Fecha próxima */
+.date-ok{color:#86efac;font-size:.78rem}
+.date-soon{color:#fbbf24;font-size:.78rem;font-weight:600}
+.date-overdue{color:#f87171;font-size:.78rem;font-weight:600}
+
+/* Switch */
+.switch-wrap{display:flex;align-items:center;gap:6px}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;inset:0;background:#334155;border-radius:20px;cursor:pointer;transition:.2s}
+.slider:before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+input:checked+.slider{background:#7c3aed}
+input:checked+.slider:before{transform:translateX(16px)}
+.switch-label{font-size:.75rem;color:#94a3b8}
+
+.btn-edit,.btn-del{border:none;border-radius:6px;padding:4px 10px;font-size:.75rem;cursor:pointer;font-weight:600;transition:opacity .2s}
+.btn-edit{background:#1e3a5f;color:#93c5fd}
+.btn-del{background:#3b0a0a;color:#fca5a5;margin-left:4px}
+.btn-edit:hover,.btn-del:hover{opacity:.8}
+
+.summary{display:flex;gap:14px;margin-top:20px;flex-wrap:wrap}
+.card{background:#1e2130;border:1px solid #2d3250;border-radius:12px;padding:16px 22px;flex:1;min-width:180px}
+.card .label{font-size:.73rem;color:#64748b;margin-bottom:6px}
+.card .value{font-size:1.25rem;font-weight:700;color:#a78bfa}
+.card .sub{font-size:.72rem;color:#475569;margin-top:3px}
+
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;align-items:center;justify-content:center}
+.overlay.show{display:flex}
+.modal{background:#1e2130;border:1px solid #2d3250;border-radius:14px;padding:28px;width:100%;max-width:540px;animation:fadeIn .2s;max-height:92vh;overflow-y:auto}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.modal h2{font-size:1rem;color:#a78bfa;margin-bottom:20px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:.75rem;color:#94a3b8;margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;background:#0f1117;border:1px solid #2d3250;border-radius:8px;color:#e2e8f0;padding:9px 12px;font-size:.85rem;outline:none;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:#7c3aed}
+.field textarea{resize:vertical;min-height:60px}
+.field .hint{font-size:.7rem;color:#475569;margin-top:4px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.switch-field{display:flex;align-items:center;gap:10px;background:#0f1117;border:1px solid #2d3250;border-radius:8px;padding:9px 12px}
+.switch-field span{font-size:.85rem;color:#e2e8f0}
+.modal-btns{display:flex;gap:10px;margin-top:20px;justify-content:flex-end}
+.btn-cancel{background:#1a1d2e;border:1px solid #2d3250;color:#94a3b8;border-radius:8px;padding:8px 18px;font-size:.85rem;cursor:pointer}
+.btn-save{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 20px;font-size:.85rem;font-weight:600;cursor:pointer}
+.btn-save:hover{background:#6d28d9}
+.empty{text-align:center;padding:40px;color:#475569;font-size:.85rem}
+.loading{text-align:center;padding:40px;color:#475569}
+.loading span{display:inline-block;animation:pulse 1s infinite}
+.section-divider{font-size:.7rem;color:#475569;text-transform:uppercase;letter-spacing:1px;margin:18px 0 10px;border-bottom:1px solid #2d3250;padding-bottom:4px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-box">
+    <img src="https://lacasadejuana.cl/wp-content/themes/LCDJ2024/img/logo-lcdj-dark-1.svg" alt="La Casa de Juana" style="width:160px;margin-bottom:18px;filter:brightness(0) invert(1)">
+    <h1>📊 Marketing Stack</h1>
+    <p>Acceso restringido · La Casa de Juana</p>
+    <div class="login-field"><label>Correo electrónico</label><input type="email" id="l-email" placeholder="tu@lacasadejuana.cl"></div>
+    <div class="login-field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn-login" onclick="doLogin()">Ingresar</button>
+    <div class="login-error" id="l-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:14px">
+      <img src="https://lacasadejuana.cl/wp-content/themes/LCDJ2024/img/logo-lcdj-dark-1.svg" alt="La Casa de Juana" style="height:32px;filter:brightness(0) invert(1);opacity:.9">
+      <div>
+        <h1>📊 Marketing Stack Manager</h1>
+        <div class="subtitle">Gestión de herramientas, plataformas y suscripciones · <span id="user-label" style="color:#7c3aed"></span></div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="fx-panel">
+        <div class="fx-box"><span class="fx-tag">USD</span><label>1 USD =</label><input type="number" id="fx-usd" value="950" min="1"> CLP</div>
+        <div class="fx-box"><span class="fx-tag">EUR</span><label>1 EUR =</label><input type="number" id="fx-eur" value="1030" min="1"> CLP</div>
+        <div class="fx-box"><span class="fx-tag">UF</span><label>1 UF =</label><input type="number" id="fx-uf" value="38000" min="1"> CLP</div>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-msg">Cargando datos...</span>
+  </div>
+
+  <div class="filters">
+    <select id="f-cat"><option value="">Todas las categorías</option></select>
+    <select id="f-status">
+      <option value="">Todos los estados</option>
+      <option value="activa">Activa</option>
+      <option value="pausada">Pausada</option>
+      <option value="renovar">Por renovar</option>
+      <option value="terminado">Terminado</option>
+      <option value="requerimiento">Requerimiento</option>
+    </select>
+    <button class="btn-add" onclick="openModal()">+ Agregar herramienta</button>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Categoría</th>
+          <th>Herramienta</th>
+          <th>Responsable</th>
+          <th>Estado</th>
+          <th>Costo</th>
+          <th>Moneda</th>
+          <th>Periodicidad</th>
+          <th class="calc">Mensual CLP s/IVA</th>
+          <th class="calc">Anual CLP s/IVA</th>
+          <th>Forma de pago</th>
+          <th>Cuenta admin</th>
+          <th>Próx. facturación</th>
+          <th>Renovación auto</th>
+          <th>Comentarios</th>
+          <th>Link</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"><tr><td colspan="16" class="loading"><span>Cargando...</span></td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="summary">
+    <div class="card"><div class="label">Total mensual departamento</div><div class="value" id="s-monthly">$0</div><div class="sub">CLP sin IVA</div></div>
+    <div class="card"><div class="label">Total anual departamento</div><div class="value" id="s-annual">$0</div><div class="sub">CLP sin IVA</div></div>
+    <div class="card"><div class="label">Herramientas activas</div><div class="value" id="s-active">0</div><div class="sub">de <span id="s-total">0</span> registradas</div></div>
+    <div class="card"><div class="label">Por renovar / Pausadas</div><div class="value" id="s-warn">0</div><div class="sub">requieren atención</div></div>
+  </div>
+  <div class="summary" id="subtotal-bar" style="display:none;margin-top:10px">
+    <div class="card" style="border-color:#7c3aed">
+      <div class="label">Subtotal mensual · <span id="sub-cat-label" style="color:#a78bfa"></span></div>
+      <div class="value" id="sub-monthly">$0</div>
+      <div class="sub">CLP sin IVA · herramientas activas filtradas</div>
+    </div>
+    <div class="card" style="border-color:#7c3aed">
+      <div class="label">Subtotal anual · <span id="sub-cat-label2" style="color:#a78bfa"></span></div>
+      <div class="value" id="sub-annual">$0</div>
+      <div class="sub">CLP sin IVA · herramientas activas filtradas</div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2 id="modal-title">Agregar herramienta</h2>
+
+    <div class="section-divider">Información general</div>
+    <div class="row2">
+      <div class="field"><label>Categoría</label><input type="text" id="f-campo-cat" placeholder="ej: SEO, Analytics..."></div>
+      <div class="field"><label>Nombre de la herramienta</label><input type="text" id="f-nombre" placeholder="ej: Google Ads"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Responsable</label><input type="text" id="f-resp" placeholder="Nombre o cargo"></div>
+      <div class="field"><label>Estado</label>
+        <select id="f-estado">
+          <option value="activa">Activa</option>
+          <option value="pausada">Pausada</option>
+          <option value="renovar">Por renovar</option>
+          <option value="terminado">Terminado</option>
+          <option value="requerimiento">Requerimiento</option>
+          <option value="UF">UF</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section-divider">Costo y pago</div>
+    <div class="row3">
+      <div class="field"><label>Costo</label><input type="number" id="f-costo" placeholder="0" min="0" step="0.01"></div>
+      <div class="field"><label>Moneda</label>
+        <select id="f-moneda">
+          <option value="CLP">CLP</option>
+          <option value="USD">USD</option>
+          <option value="EUR">EUR</option>
+          <option value="UF">UF</option>
+        </select>
+      </div>
+      <div class="field"><label>Periodicidad</label>
+        <select id="f-periodo">
+          <option value="mensual">Mensual</option>
+          <option value="anual">Anual</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="semestral">Semestral</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Forma de pago</label>
+        <input type="text" id="f-pago" placeholder="ej: 453">
+        <div class="hint">Últimos dígitos de la tarjeta</div>
+      </div>
+      <div class="field"><label>Cuenta administración</label><input type="email" id="f-email-admin" placeholder="correo@ejemplo.com"></div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Próxima fecha de facturación</label>
+        <input type="date" id="f-fecha">
+      </div>
+      <div class="field">
+        <label>Renovación automática</label>
+        <div class="switch-field">
+          <label class="switch"><input type="checkbox" id="f-renovacion"><span class="slider"></span></label>
+          <span id="renov-label">No</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-divider">Otros</div>
+    <div class="field"><label>Link de acceso</label><input type="url" id="f-link" placeholder="https://..."></div>
+    <div class="field"><label>Comentarios</label><textarea id="f-comentario" placeholder="Notas, observaciones..."></textarea></div>
+
+    <div class="modal-btns">
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+      <button class="btn-save" onclick="saveRow()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const API_URL = '/.netlify/functions/data';
+
+// ── AUTH ──
+const ALLOWED  = ['javier@lacasadejuana.cl','sergio@lacasadejuana.cl','loreto@lacasadejuana.cl','lorena@lacasadejuana.cl','paulina@lacasadejuana.cl','priscila@lacasadejuana.cl','marketing@lacasadejuana.cl'];
+const PASSWORD = 'Mkt_1225';
+
+function doLogin() {
+  const email = document.getElementById('l-email').value.trim().toLowerCase();
+  const pass  = document.getElementById('l-pass').value;
+  const err   = document.getElementById('l-error');
+  if (!ALLOWED.includes(email)) { err.textContent='Correo no autorizado.'; return; }
+  if (pass !== PASSWORD)        { err.textContent='Contraseña incorrecta.'; return; }
+  sessionStorage.setItem('mkt-user', email);
+  showApp(email);
+}
+function doLogout() {
+  sessionStorage.removeItem('mkt-user');
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('l-pass').value='';
+  document.getElementById('l-error').textContent='';
+}
+function showApp(email) {
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('user-label').textContent=email;
+  loadData();
+}
+(function(){
+  const u=sessionStorage.getItem('mkt-user');
+  if(u&&ALLOWED.includes(u)) showApp(u);
+})();
+
+// Switch label live update
+document.getElementById('f-renovacion').addEventListener('change', function(){
+  document.getElementById('renov-label').textContent = this.checked ? 'Sí' : 'No';
+});
+
+// ── JSONBIN ──
+let data=[], editIdx=null, saveTimer=null;
+
+function setSync(state,msg){
+  document.getElementById('sync-dot').className='sync-dot '+state;
+  document.getElementById('sync-msg').textContent=msg;
+}
+
+async function loadData(){
+  setSync('saving','Cargando datos...');
+  try {
+    const res=await fetch(API_URL);
+    const json=await res.json();
+    data=Array.isArray(json.record)?json.record:[];
+    if(data.length===0){data=getInitialData();await pushData();}
+    // Auto-avanzar fechas de facturación vencidas
+    let updated=false;
+    data.forEach(r=>{
+      if(r.fecha && r.estado==='activa'){
+        const adv=advanceDateIfPast(r.fecha, r.periodo);
+        if(adv!==r.fecha){r.fecha=adv;updated=true;}
+      }
+    });
+    if(updated) await pushData();
+    setSync('ok','Datos sincronizados · '+new Date().toLocaleTimeString('es-CL'));
+    render();
+  } catch(e){ setSync('error','Error al cargar. Verifica tu conexión.'); }
+}
+
+async function pushData(){
+  setSync('saving','Guardando...');
+  try {
+    await fetch(API_URL,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+    setSync('ok','Guardado · '+new Date().toLocaleTimeString('es-CL'));
+  } catch(e){ setSync('error','Error al guardar.'); }
+}
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer=setTimeout(pushData,600); }
+
+// ── DATE HELPERS ──
+function advanceDateIfPast(dateStr, periodo) {
+  if(!dateStr) return dateStr;
+  const today=new Date(); today.setHours(0,0,0,0);
+  let d=new Date(dateStr+'T00:00:00');
+  while(d<today){ d=addPeriod(d,periodo); }
+  return d.toISOString().slice(0,10);
+}
+
+function addPeriod(d, periodo){
+  const nd=new Date(d);
+  if(periodo==='mensual')    { nd.setMonth(nd.getMonth()+1); }
+  else if(periodo==='anual') { nd.setFullYear(nd.getFullYear()+1); }
+  else if(periodo==='trimestral') { nd.setMonth(nd.getMonth()+3); }
+  else if(periodo==='semestral')  { nd.setMonth(nd.getMonth()+6); }
+  return nd;
+}
+
+function dateClass(dateStr){
+  if(!dateStr) return '';
+  const today=new Date(); today.setHours(0,0,0,0);
+  const d=new Date(dateStr+'T00:00:00');
+  const diff=Math.ceil((d-today)/(1000*60*60*24));
+  if(diff<0)  return 'date-overdue';
+  if(diff<=14) return 'date-soon';
+  return 'date-ok';
+}
+
+function fmtDate(dateStr){
+  if(!dateStr) return '<span style="color:#334155">—</span>';
+  const [y,m,day]=dateStr.split('-');
+  return `${day}/${m}/${y}`;
+}
+
+// ── HELPERS ──
+const fxUSD=()=>+document.getElementById('fx-usd').value||950;
+const fxEUR=()=>+document.getElementById('fx-eur').value||1030;
+const fxUF =()=>+document.getElementById('fx-uf').value||38000;
+function toCLP(c,m){ return m==='USD'?c*fxUSD():m==='EUR'?c*fxEUR():m==='UF'?c*fxUF():c; }
+function toMonthly(clp,p){ return p==='anual'?clp/12:p==='trimestral'?clp/3:p==='semestral'?clp/6:clp; }
+function fmt(n){ return '$'+Math.round(n).toLocaleString('es-CL'); }
+
+const estadoMap={activa:{cls:'activa',label:'Activa'},pausada:{cls:'pausada',label:'Pausada'},renovar:{cls:'renovar',label:'Por renovar'},terminado:{cls:'terminado',label:'Terminado'},requerimiento:{cls:'requerimiento',label:'Requerimiento'}};
+function badgeHTML(e){ const s=estadoMap[e]||{cls:'activa',label:e}; return `<span class="badge ${s.cls}">${s.label}</span>`; }
+
+// ── RENDER ──
+function updateCatDropdown(){
+  const sel=document.getElementById('f-cat');
+  const cur=sel.value;
+  const cats=[...new Set(data.map(r=>r.cat).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Todas las categorías</option>'+cats.map(c=>`<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+}
+
+function render(){
+  updateCatDropdown();
+  const catF=document.getElementById('f-cat').value;
+  const stF =document.getElementById('f-status').value;
+  const tbody=document.getElementById('tbody');
+  const estadoOrder={activa:1,renovar:2,pausada:3,requerimiento:4,terminado:5};
+  const filtered=data
+    .filter(r=>(!catF||r.cat===catF)&&(!stF||r.estado===stF))
+    .sort((a,b)=>(estadoOrder[a.estado]||9)-(estadoOrder[b.estado]||9));
+
+  if(!filtered.length){
+    tbody.innerHTML=`<tr><td colspan="16" class="empty">No hay herramientas. ¡Agrega la primera!</td></tr>`;
+  } else {
+    tbody.innerHTML=filtered.map(r=>{
+      const ri=data.indexOf(r);
+      const skip=r.estado==='terminado'||r.estado==='requerimiento';
+      const m=toMonthly(toCLP(r.costo,r.moneda),r.periodo);
+      const mVal=skip?'<span style="color:#475569">—</span>':`<span class="calc">${fmt(m)}</span>`;
+      const aVal=skip?'<span style="color:#475569">—</span>':`<span class="calc">${fmt(m*12)}</span>`;
+      const pagoHTML=r.pago?`<span class="card-chip">💳 ${r.pago.startsWith('...')?r.pago:'...'+r.pago}</span>`:'<span style="color:#334155">—</span>';
+      const linkHTML=r.link?`<a href="${r.link}" target="_blank" class="link-btn" title="Abrir ${r.nombre}">🔗</a>`:'<span style="color:#334155">—</span>';
+      const comentHTML=r.comentario?`<span title="${r.comentario.replace(/"/g,'&quot;')}">${r.comentario}</span>`:'<span style="color:#334155">—</span>';
+      const emailHTML=r.email_admin?`<span style="font-size:.75rem;color:#94a3b8" title="${r.email_admin}">${r.email_admin}</span>`:'<span style="color:#334155">—</span>';
+      const dc=dateClass(r.fecha);
+      const fechaHTML=r.fecha?`<span class="${dc}">${fmtDate(r.fecha)}${dc==='date-soon'?' ⚠️':dc==='date-overdue'?' 🔴':''}</span>`:'<span style="color:#334155">—</span>';
+      const renovHTML=r.renovacion_auto
+        ?'<span style="color:#86efac;font-size:.75rem;font-weight:600">✓ Sí</span>'
+        :'<span style="color:#94a3b8;font-size:.75rem">No</span>';
+      return `<tr>
+        <td>${r.cat||'—'}</td><td><strong>${r.nombre}</strong></td><td>${r.resp||'—'}</td>
+        <td>${badgeHTML(r.estado)}</td>
+        <td>${Number(r.costo).toLocaleString('es-CL')}</td><td>${r.moneda}</td>
+        <td style="text-transform:capitalize">${r.periodo}</td>
+        <td>${mVal}</td><td>${aVal}</td>
+        <td>${pagoHTML}</td>
+        <td>${emailHTML}</td>
+        <td>${fechaHTML}</td>
+        <td>${renovHTML}</td>
+        <td class="comentario">${comentHTML}</td>
+        <td style="text-align:center">${linkHTML}</td>
+        <td>
+          <button class="btn-edit" onclick="editRow(${ri})">✏️</button>
+          <button class="btn-del"  onclick="delRow(${ri})">🗑️</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  let tM=0,tA=0,activas=0,warns=0;
+  data.forEach(r=>{
+    if(r.estado!=='terminado'&&r.estado!=='requerimiento'){const m=toMonthly(toCLP(r.costo,r.moneda),r.periodo);tM+=m;tA+=m*12;}
+    if(r.estado==='activa') activas++;
+    if(r.estado==='pausada'||r.estado==='renovar') warns++;
+  });
+  document.getElementById('s-monthly').textContent=fmt(tM);
+  document.getElementById('s-annual').textContent=fmt(tA);
+  document.getElementById('s-active').textContent=activas;
+  document.getElementById('s-total').textContent=data.length;
+  document.getElementById('s-warn').textContent=warns;
+
+  const subBar=document.getElementById('subtotal-bar');
+  if(catF){
+    let sM=0,sA=0;
+    filtered.forEach(r=>{if(r.estado!=='terminado'&&r.estado!=='requerimiento'){const m=toMonthly(toCLP(r.costo,r.moneda),r.periodo);sM+=m;sA+=m*12;}});
+    document.getElementById('sub-cat-label').textContent=catF;
+    document.getElementById('sub-cat-label2').textContent=catF;
+    document.getElementById('sub-monthly').textContent=fmt(sM);
+    document.getElementById('sub-annual').textContent=fmt(sA);
+    subBar.style.display='flex';
+  } else { subBar.style.display='none'; }
+}
+
+// ── MODAL ──
+function openModal(idx=null){
+  editIdx=idx;
+  document.getElementById('modal-title').textContent=idx!==null?'Editar herramienta':'Agregar herramienta';
+  if(idx!==null){
+    const r=data[idx];
+    document.getElementById('f-campo-cat').value =r.cat||'';
+    document.getElementById('f-nombre').value    =r.nombre||'';
+    document.getElementById('f-resp').value      =r.resp||'';
+    document.getElementById('f-estado').value    =r.estado;
+    document.getElementById('f-costo').value     =r.costo;
+    document.getElementById('f-moneda').value    =r.moneda;
+    document.getElementById('f-periodo').value   =r.periodo;
+    document.getElementById('f-pago').value      =r.pago||'';
+    document.getElementById('f-email-admin').value=r.email_admin||'';
+    document.getElementById('f-fecha').value     =r.fecha||'';
+    document.getElementById('f-renovacion').checked=!!r.renovacion_auto;
+    document.getElementById('renov-label').textContent=r.renovacion_auto?'Sí':'No';
+    document.getElementById('f-link').value      =r.link||'';
+    document.getElementById('f-comentario').value=r.comentario||'';
+  } else {
+    ['f-campo-cat','f-nombre','f-resp','f-costo','f-pago','f-email-admin','f-fecha','f-link','f-comentario'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-estado').value='activa';
+    document.getElementById('f-moneda').value='CLP';
+    document.getElementById('f-periodo').value='mensual';
+    document.getElementById('f-renovacion').checked=false;
+    document.getElementById('renov-label').textContent='No';
+  }
+  document.getElementById('overlay').classList.add('show');
+}
+function closeModal(){ document.getElementById('overlay').classList.remove('show'); editIdx=null; }
+
+function saveRow(){
+  let pago=document.getElementById('f-pago').value.trim();
+  if(pago&&!pago.startsWith('...')) pago='...'+pago;
+  const r={
+    cat:        document.getElementById('f-campo-cat').value.trim(),
+    nombre:     document.getElementById('f-nombre').value.trim(),
+    resp:       document.getElementById('f-resp').value.trim(),
+    estado:     document.getElementById('f-estado').value,
+    costo:      parseFloat(document.getElementById('f-costo').value)||0,
+    moneda:     document.getElementById('f-moneda').value,
+    periodo:    document.getElementById('f-periodo').value,
+    pago,
+    email_admin:document.getElementById('f-email-admin').value.trim(),
+    fecha:      document.getElementById('f-fecha').value,
+    renovacion_auto: document.getElementById('f-renovacion').checked,
+    link:       document.getElementById('f-link').value.trim(),
+    comentario: document.getElementById('f-comentario').value.trim()
+  };
+  if(!r.nombre){alert('El nombre es obligatorio.');return;}
+  if(editIdx!==null) data[editIdx]=r; else data.push(r);
+  render(); scheduleSave(); closeModal();
+}
+
+function editRow(i){ openModal(i); }
+function delRow(i){
+  if(confirm(`¿Eliminar "${data[i].nombre}"?`)){ data.splice(i,1); render(); scheduleSave(); }
+}
+
+document.getElementById('overlay').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
+document.getElementById('f-status').addEventListener('change',render);
+document.getElementById('fx-usd').addEventListener('input',render);
+document.getElementById('fx-eur').addEventListener('input',render);
+document.getElementById('fx-uf').addEventListener('input',render);
+
+// ── INITIAL DATA ──
+function getInitialData(){
+  return [
+    {cat:'Redes Sociales',    nombre:'Later',                       resp:'Lole',   estado:'activa',        costo:400,   moneda:'USD',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://later.com',                comentario:''},
+    {cat:'Análisis',          nombre:'Supermetrics',                resp:'Javier', estado:'activa',        costo:357,   moneda:'USD',periodo:'trimestral',pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://supermetrics.com',          comentario:'Encargada de transferir data d...'},
+    {cat:'CPC',               nombre:'Portal Inmobiliario Plata',   resp:'Javier', estado:'activa',        costo:118671,moneda:'CLP',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'',                                  comentario:''},
+    {cat:'Redes Sociales',    nombre:'Storrito',                    resp:'Lole',   estado:'activa',        costo:222,   moneda:'USD',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://storrito.com',              comentario:''},
+    {cat:'Productividad',     nombre:'Chat GPT JPF',                resp:'Javier', estado:'activa',        costo:20,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://chatgpt.com',               comentario:''},
+    {cat:'Productividad',     nombre:'Chat GPT MKT',                resp:'Equipo', estado:'activa',        costo:20,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://chatgpt.com',               comentario:''},
+    {cat:'Capacitación',      nombre:'AdWorld',                     resp:'Javier', estado:'activa',        costo:348,   moneda:'USD',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://adworld.online',            comentario:''},
+    {cat:'Producción Gráfica',nombre:'CapCut',                      resp:'Lole',   estado:'activa',        costo:79990, moneda:'CLP',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://capcut.com',                comentario:''},
+    {cat:'Producción Gráfica',nombre:'Flora',                       resp:'Pri',    estado:'activa',        costo:16,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'',                                  comentario:''},
+    {cat:'Desempeño',         nombre:'Lovable',                     resp:'Pri',    estado:'activa',        costo:25,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://lovable.dev',               comentario:''},
+    {cat:'Producción Gráfica',nombre:'Adobe Suite',                 resp:'Pri',    estado:'activa',        costo:39450, moneda:'CLP',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://adobe.com',                 comentario:''},
+    {cat:'Desempeño',         nombre:'CRM - Clientify',             resp:'Javier', estado:'activa',        costo:1814,  moneda:'USD',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://clientify.com',             comentario:'CRM implementado, valor seg...'},
+    {cat:'SEO',               nombre:'Ubersuggest',                 resp:'Javier', estado:'activa',        costo:20,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://neilpatel.com/ubersuggest',  comentario:''},
+    {cat:'SEO',               nombre:'Screaming Frog',              resp:'Sergio', estado:'requerimiento', costo:279,   moneda:'USD',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://screamingfrog.co.uk',        comentario:''},
+    {cat:'SEO',               nombre:'Semrush AI Writer and Editor',resp:'Lole',   estado:'activa',        costo:60,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://semrush.com',               comentario:''},
+    {cat:'Producción Gráfica',nombre:'Higgsfield',                  resp:'Pri',    estado:'requerimiento', costo:29,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://higgsfield.ai',             comentario:''},
+    {cat:'Análisis',          nombre:'Looker Studio Pro',           resp:'Javier', estado:'requerimiento', costo:9,     moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://lookerstudio.google.com',   comentario:''},
+    {cat:'Desempeño',         nombre:'Mailchimp',                   resp:'Javier', estado:'terminado',     costo:60,    moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://mailchimp.com',             comentario:''},
+    {cat:'Producción Gráfica',nombre:'Midjourney',                  resp:'Pri',    estado:'terminado',     costo:8,     moneda:'USD',periodo:'mensual',  pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://midjourney.com',            comentario:''},
+    {cat:'Redes Sociales',    nombre:'Metricool',                   resp:'Pauli',  estado:'terminado',     costo:348,   moneda:'USD',periodo:'anual',    pago:'',email_admin:'',fecha:'',renovacion_auto:false,link:'https://metricool.com',             comentario:''},
+  ];
+}
+</script>
+</body>
+</html>
